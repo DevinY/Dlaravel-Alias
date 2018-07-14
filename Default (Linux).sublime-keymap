@@ -1,4 +1,4 @@
 [
-	{ "keys": ["super+shift+i"], "command": "php_artisan"},
+	{ "keys": ["super+alt+i"], "command": "php_artisan"},
 	{ "keys": ["super+shift+c"], "command": "composer"},
 ]
