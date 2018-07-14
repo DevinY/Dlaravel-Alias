@@ -1,0 +1,13 @@
+[
+  { "caption": "D-Laravel: composer", "command": "composer" },
+  { "caption": "D-Laravel: php artisan migrate", "command": "php_artisan_migrate" },
+  { "caption": "D-Laravel: php artisan migrate:refresh", "command": "php_artisan_migrate_refresh" },
+  { "caption": "D-Laravel: php artisan", "command": "php_artisan" },
+  { "caption": "D-Laravel: console up", "command": "console_up" },
+  { "caption": "D-Laravel: console down", "command": "console_down" },
+  { "caption": "D-Laravel: console ps", "command": "console_ps"},
+  { "caption": "D-Laravel: console info", "command": "console_info"},
+  { "caption": "D-Laravel: console", "command": "console"},
+  { "caption": "D-Laravel: db", "command": "create_db"},
+  { "caption": "D-Laravel: host", "command": "create_host"},
+]

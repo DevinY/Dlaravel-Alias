@@ -1,0 +1,25 @@
+[
+{ 
+        "caption": "Dlaravel", 
+	"id": "Dlaravel", 
+	"children":
+	[
+	{
+	"caption": "php artisan",
+	"command": "php_artisan"
+	},
+	{
+	"caption": "composer",
+	"command": "composer"
+	},
+	{
+	"caption": "console down",
+	"command": "console_down"
+	},
+	{
+	"caption": "console up",
+	"command": "console_up"
+	},
+	]
+}
+]

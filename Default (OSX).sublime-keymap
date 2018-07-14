@@ -1,0 +1,4 @@
+[
+	{ "keys": ["super+shift+a"], "command": "php_artisan"},
+	{ "keys": ["super+shift+c"], "command": "composer"},
+]
