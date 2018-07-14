@@ -33,15 +33,20 @@ class PhpArtisanCommand(sublime_plugin.TextCommand):
         def run_command(*args):
             dlaravel_project = re.sub(".*sites/(.+$)", "\\1", folder)
             dlaravel_basepath = re.sub("(^.*)/sites/(.+$)", "\\1", folder)
-            print('Command is issued (php artisan '+''.join(list(args))+'), Please wait...')
+
+            parameter=""
+            for arg in list(args):
+                parameter=parameter+" {}".format(arg)
+            print('Command is issued (php artisan{}), Please wait...'.format(parameter))
             command=["docker-compose","-f","{}/docker-compose.yml".format(dlaravel_basepath),"exec","-w","/var/www/html/{}".format(dlaravel_project),"-u","dlaravel","-T","php","php","artisan"]+list(args)
             proc=Popen(command ,bufsize=0, stdout=PIPE,stderr=PIPE, universal_newlines=True);
             output, error = proc.communicate()
             proc.wait()
             exit_code=proc.poll()
             if(exit_code==0):
+                self.view.set_status("Dlaravel","composer{} is done.".format(parameter))
                 print(output)
-                self.view.set_status("Dlaravel", "Done")
+                print("Finished.")
             else:
                 print("faild:{}".format(error))
 
@@ -112,13 +117,23 @@ class ComposerCommand(sublime_plugin.TextCommand):
         def run_command(*args):
             dlaravel_project = re.sub(".*sites/(.+$)", "\\1", folder)
             dlaravel_basepath = re.sub("(^.*)/sites/(.+$)", "\\1", folder)
-            print('Command is issued (composer '+''.join(list(args))+'), Please wait...')
+            parameter=""
+            for arg in list(args):
+                parameter=parameter+" {}".format(arg)
+
+            print('Command is issued (composer{}), Please wait...'.format(parameter))
             command=["docker-compose","-f","{}/docker-compose.yml".format(dlaravel_basepath),"exec","-w","/var/www/html/{}".format(dlaravel_project),"-u","dlaravel","-T","php","composer"]+list(args)
+            #print(command)
             proc=Popen(command ,bufsize=0, stdout=PIPE,stderr=PIPE, universal_newlines=True);
-            while 1:
-                print(proc.stdout.readline()[:-1])
-                if proc.stdout.readline()[:-1]=='':
-                    break
+            output, error = proc.communicate()
+            proc.wait()
+            if(proc.poll()==0):
+                self.view.set_status("Dlaravel","composer{} is done.".format(parameter))
+                print(output)
+                sublime.active_window().run_command("show_panel", {"panel": "console", "toggle": True})
+            else:
+                self.view.set_status("Dlaravel", "Error" % command)
+                print(error)
 
         def on_done( command ):
             sublime.active_window().run_command("show_panel", {"panel": "console", "toggle": True})
