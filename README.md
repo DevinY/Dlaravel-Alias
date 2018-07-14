@@ -1,5 +1,5 @@
 # Dlaravel-Alias
-# Sublime package of D-Laravel.
+## Sublime package of D-Laravel.
 
 This package make D-Laravel users easy to run artisan and composer command inside of Docker Container.
 
