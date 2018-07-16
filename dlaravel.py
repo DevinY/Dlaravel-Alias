@@ -3,11 +3,6 @@ from subprocess import Popen, PIPE, STDOUT, check_output,check_call, call
 from threading import Thread
 import os, sys
 
-class DlaravelCommand(sublime_plugin.TextCommand):
-     def run(self, edit):
-         path = self.view.window().folders()[0]
-         print("console up:{}".format(path))
-
 class PhpArtisanCommand(sublime_plugin.TextCommand):
     initial_text=""
     def run(self, edit, **args):
@@ -15,20 +10,20 @@ class PhpArtisanCommand(sublime_plugin.TextCommand):
         folder = self.view.window().extract_variables()['folder']
         def auto_complete_level2(*args):
             if("route:l\t" in list(args) or "route:li\t" in list(args)):
-                sublime.active_window().show_input_panel("php artisan","route:list", on_done, None, None)
+                self.view.window().show_input_panel("php artisan","route:list", on_done, None, None)
             if("migrate:refresh\t" in list(args)):
-                sublime.active_window().show_input_panel("php artisan","migrate:refresh", on_done, None, None)
+                self.view.window().show_input_panel("php artisan","migrate:refresh", on_done, None, None)
 
         def auto_complete(*args):
             #print(args)
             if("mi\t" in list(args)):
-                sublime.active_window().show_input_panel("php artisan","migrate", on_done, auto_complete_level2, None)
+                self.view.window().show_input_panel("php artisan","migrate", on_done, auto_complete_level2, None)
             if("ro\t" in list(args)):
-                sublime.active_window().show_input_panel("php artisan","route:", on_done, auto_complete_level2, None)
+                self.view.window().show_input_panel("php artisan","route:", on_done, auto_complete_level2, None)
             if("vi\t" in list(args)):
-                sublime.active_window().show_input_panel("php artisan","view", on_done, auto_complete_level2, None)
+                self.view.window().show_input_panel("php artisan","view", on_done, auto_complete_level2, None)
             if("view:c\t" in list(args)):
-                sublime.active_window().show_input_panel("php artisan","view:clear", on_done, auto_complete_level2, None)
+                self.view.window().show_input_panel("php artisan","view:clear", on_done, auto_complete_level2, None)
 
         def run_command(*args):
             dlaravel_project = re.sub(".*sites/(.+$)", "\\1", folder)
@@ -51,17 +46,18 @@ class PhpArtisanCommand(sublime_plugin.TextCommand):
                 print("faild:{}".format(error))
 
         def on_done( command ):
-            sublime.active_window().run_command("show_panel", {"panel": "console", "toggle": True})
+            self.view.window().run_command("show_panel", {"panel": "console", "toggle": True})
             this_thread = Thread(target=run_command, args=command.split())
             this_thread.start()
 
-        sublime.active_window().show_input_panel("php artisan","", on_done, auto_complete, None)
+        self.view.window().show_input_panel("php artisan","", on_done, auto_complete, None)
 
 class PhpArtisanMigrateCommand(sublime_plugin.TextCommand):
 
     def run(self, edit):
         args="migrate"
         def run_command(*args):
+            folder = self.view.window().extract_variables()['folder']
             dlaravel_project = re.sub(".*sites/(.+$)", "\\1", folder)
             dlaravel_basepath = re.sub("(^.*)/sites/(.+$)", "\\1", folder)
             print('Command is issued (composer '+''.join(list(args))+'), Please wait...')
@@ -71,12 +67,11 @@ class PhpArtisanMigrateCommand(sublime_plugin.TextCommand):
                 print(proc.stdout.readline()[:-1])
                 if proc.stdout.readline()[:-1]=='':
                     break
-        folder = self.view.window().extract_variables()['folder']
-        sublime.active_window().run_command("show_panel", {"panel": "console", "toggle": True})
+        self.view.window().run_command("show_panel", {"panel": "console", "toggle": True})
         this_thread = Thread(target=run_command, args=args.split())
         this_thread.start()
 
-class ConsoleCommand(sublime_plugin.TextCommand):
+class DockerComposeCommand(sublime_plugin.TextCommand):
 
     def run(self, edit, **args):
         self.args = args
@@ -88,6 +83,9 @@ class ConsoleCommand(sublime_plugin.TextCommand):
             print("composer {}".format(list(args)))
             #print(type(args))
             parameter=list(args)
+            if("exec" in args):
+               parameter=["exec","-T"]+parameter[1:]
+
             if("up" in args):
                 parameter=parameter+["-d"]
             
@@ -97,16 +95,18 @@ class ConsoleCommand(sublime_plugin.TextCommand):
             proc.wait()
             if(proc.poll()==0):
                 self.view.set_status("Dlaravel", "Success" % command)
+                print(output)
+                self.view.window().run_command("show_panel", {"panel": "console", "toggle": True})
             else:
                 self.view.set_status("Dlaravel", "Error" % command)
                 print(error)
-                sublime.active_window().run_command("show_panel", {"panel": "console", "toggle": True})
+                self.view.window().run_command("show_panel", {"panel": "console", "toggle": True})
 
         def on_done( command ):
             this_thread = Thread(target=run_command, args=command.split())
             this_thread.start()
 
-        sublime.active_window().show_input_panel("console", "", on_done, None, None)
+        self.view.window().show_input_panel("docker-compose", "", on_done, None, None)
 
 class ComposerCommand(sublime_plugin.TextCommand):
 
@@ -121,7 +121,8 @@ class ComposerCommand(sublime_plugin.TextCommand):
             for arg in list(args):
                 parameter=parameter+" {}".format(arg)
 
-            print('Command is issued (composer{}), Please wait...'.format(parameter))
+            msg='Command is issued (composer{}), Please wait...'.format(parameter)
+            self.view.set_status("Dlaravel", msg)
             command=["docker-compose","-f","{}/docker-compose.yml".format(dlaravel_basepath),"exec","-w","/var/www/html/{}".format(dlaravel_project),"-u","dlaravel","-T","php","composer"]+list(args)
             #print(command)
             proc=Popen(command ,bufsize=0, stdout=PIPE,stderr=PIPE, universal_newlines=True);
@@ -130,17 +131,16 @@ class ComposerCommand(sublime_plugin.TextCommand):
             if(proc.poll()==0):
                 self.view.set_status("Dlaravel","composer{} is done.".format(parameter))
                 print(output)
-                sublime.active_window().run_command("show_panel", {"panel": "console", "toggle": True})
+                self.view.window().run_command("show_panel", {"panel": "console", "toggle": True})
             else:
                 self.view.set_status("Dlaravel", "Error" % command)
                 print(error)
 
         def on_done( command ):
-            sublime.active_window().run_command("show_panel", {"panel": "console", "toggle": True})
             this_thread = Thread(target=run_command, args=command.split())
             this_thread.start()
 
-        sublime.active_window().show_input_panel("composer", "", on_done, None, None)
+        self.view.window().show_input_panel("composer", "", on_done, None, None)
 
 class ConsoleUpCommand(sublime_plugin.TextCommand):
      def run(self, edit):
@@ -158,9 +158,7 @@ class ConsoleUpCommand(sublime_plugin.TextCommand):
          else:
              self.view.set_status("Dlaravel", "Error" % command)
              print(error)
-             sublime.active_window().run_command("show_panel", {"panel": "console", "toggle": True})
-
-
+             self.view.window().run_command("show_panel", {"panel": "console", "toggle": True})
 
 class ConsoleDownCommand(sublime_plugin.TextCommand):
      def run(self, edit):
@@ -177,7 +175,7 @@ class ConsoleDownCommand(sublime_plugin.TextCommand):
          else:
              self.view.set_status("Dlaravel", "Error" % command)
              print(error)
-             sublime.active_window().run_command("show_panel", {"panel": "console", "toggle": True})
+             self.view.window().run_command("show_panel", {"panel": "console", "toggle": True})
 
 class ConsolePsCommand(sublime_plugin.TextCommand):
      def run(self, edit):
@@ -192,16 +190,8 @@ class ConsolePsCommand(sublime_plugin.TextCommand):
          if(proc.poll()==0):
              print(output)
              self.view.set_status("Dlaravel", "Success" % command)
-             sublime.active_window().run_command("show_panel", {"panel": "console", "toggle": True})
+             self.view.window().run_command("show_panel", {"panel": "console", "toggle": True})
          else:
              self.view.set_status("Dlaravel", "Error" % command)
              print(error)
-             sublime.active_window().run_command("show_panel", {"panel": "console", "toggle": True})
-
-class CreateDbCommand(sublime_plugin.TextCommand):
-     def run(self, edit):
-        self.view.set_status("Dlaravel", "This feature is not implemented.")
-
-class CreateHostCommand(sublime_plugin.TextCommand):
-     def run(self, edit):
-        self.view.set_status("Dlaravel", "This feature is not implemented.")
+             self.view.window().run_command("show_panel", {"panel": "console", "toggle": True})

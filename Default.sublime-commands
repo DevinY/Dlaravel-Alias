@@ -7,7 +7,5 @@
   { "caption": "D-Laravel: console down", "command": "console_down" },
   { "caption": "D-Laravel: console ps", "command": "console_ps"},
   { "caption": "D-Laravel: console info", "command": "console_info"},
-  { "caption": "D-Laravel: console", "command": "console"},
-  { "caption": "D-Laravel: db", "command": "create_db"},
-  { "caption": "D-Laravel: host", "command": "create_host"},
+  { "caption": "D-Laravel: docker-compose", "command": "docker_compose"},
 ]
