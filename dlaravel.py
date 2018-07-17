@@ -198,12 +198,19 @@ class ConsoleDownCommand(sublime_plugin.TextCommand):
             arg = "down".split()
             dlaravel_project = re.sub(".*sites/(.+$)", "\\1", folder)
             dlaravel_basepath = re.sub("(^.*)/sites/(.+$)", "\\1", folder)
-            command=["docker-compose","-f","{}/docker-compose.yml".format(dlaravel_basepath)]+arg
+            command=["docker-compose","--no-ansi","-f","{}/docker-compose.yml".format(dlaravel_basepath)]+arg
             proc=Popen(command ,bufsize=1, stdout=PIPE,stderr=PIPE, universal_newlines=True);
             output, error = proc.communicate()
             proc.wait()
+            print(error)
             if(proc.poll()==0):
                 self.view.set_status("Dlaravel", "console down Success" % command)
+                arg = "ps".split()
+                command=["docker-compose","-f","{}/docker-compose.yml".format(dlaravel_basepath)]+arg
+                proc=Popen(command ,bufsize=1, stdout=PIPE,stderr=PIPE, universal_newlines=True);
+                output = proc.communicate()[0]
+                print(output)
+                self.window.run_command("show_panel", {"panel": "console", "toggle": True})
             else:
                 self.view.set_status("Dlaravel", "Error" % command)
                 print(error)
