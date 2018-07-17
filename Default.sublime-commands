@@ -5,7 +5,6 @@
   { "caption": "D-Laravel: php artisan", "command": "php_artisan" },
   { "caption": "D-Laravel: console up", "command": "console_up" },
   { "caption": "D-Laravel: console down", "command": "console_down" },
-  { "caption": "D-Laravel: console ps", "command": "console_ps"},
-  { "caption": "D-Laravel: console info", "command": "console_info"},
+  { "caption": "D-Laravel: console ps", "command": "docker_compose","args":{"parameters":["ps"]}},
   { "caption": "D-Laravel: docker-compose", "command": "docker_compose"},
 ]

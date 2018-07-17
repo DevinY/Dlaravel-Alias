@@ -1,7 +1,6 @@
-import sublime, sublime_plugin, time, re
-from subprocess import Popen, PIPE, STDOUT, check_output,check_call, call
+import sublime, sublime_plugin, re
+from subprocess import Popen, PIPE, STDOUT
 from threading import Thread
-import os, sys
 
 class PhpArtisanCommand(sublime_plugin.TextCommand):
     def run(self, edit, **args):
@@ -74,7 +73,7 @@ class PhpArtisanMigrateCommand(sublime_plugin.TextCommand):
                 print(output)
                 print("Finished.")
             else:
-                print("faild:{}".format(error))
+                print("{}".format(error))
 
         self.window.run_command("show_panel", {"panel": "console", "toggle": True})
         this_thread = Thread(target=run_command, args=args.split())
@@ -83,9 +82,9 @@ class PhpArtisanMigrateCommand(sublime_plugin.TextCommand):
 class DockerComposeCommand(sublime_plugin.TextCommand):
 
     def run(self, edit, **args):
-        self.args = args
+
         self.window = self.view.window()
-        folder = self.view.window().extract_variables()['folder']
+        folder = self.window.extract_variables()['folder']
 
         def run_command(*args):
             dlaravel_project = re.sub(".*sites/(.+$)", "\\1", folder)
@@ -116,7 +115,10 @@ class DockerComposeCommand(sublime_plugin.TextCommand):
             this_thread = Thread(target=run_command, args=command.split())
             this_thread.start()
 
-        self.window.show_input_panel("docker-compose", "", on_done, None, None)
+        if args:
+            run_command(*args['parameters'])
+        else:
+            self.window.show_input_panel("docker-compose", "", on_done, None, None)
 
 class ComposerCommand(sublime_plugin.TextCommand):
 
@@ -160,55 +162,52 @@ class ComposerCommand(sublime_plugin.TextCommand):
         self.window.show_input_panel("composer", "", on_done, None, None)
 
 class ConsoleUpCommand(sublime_plugin.TextCommand):
+
      def run(self, edit):
-         folder = self.view.window().extract_variables()['folder']
-         arg = "up -d --remove-orphans".split()
-         dlaravel_project = re.sub(".*sites/(.+$)", "\\1", folder)
-         dlaravel_basepath = re.sub("(^.*)/sites/(.+$)", "\\1", folder)
-         command=["docker-compose","-f","{}/docker-compose.yml".format(dlaravel_basepath)]+arg
-         print(command)
-         proc=Popen(command ,bufsize=1, stdout=PIPE,stderr=PIPE, universal_newlines=True);
-         output, error = proc.communicate()
-         proc.wait()
-         if(proc.poll()==0):
-             self.view.set_status("Dlaravel", "console up success" % command)
-         else:
-             self.view.set_status("Dlaravel", "Error" % command)
-             print(error)
-             self.view.window().run_command("show_panel", {"panel": "console", "toggle": True})
+        def run_command(*args):
+            folder = self.window.extract_variables()['folder']
+            arg = "up -d --remove-orphans".split()
+            dlaravel_project = re.sub(".*sites/(.+$)", "\\1", folder)
+            dlaravel_basepath = re.sub("(^.*)/sites/(.+$)", "\\1", folder)
+            command=["docker-compose","-f","{}/docker-compose.yml".format(dlaravel_basepath)]+arg
+            print(command)
+            proc=Popen(command ,bufsize=1, stdout=PIPE,stderr=PIPE, universal_newlines=True);
+            output, error = proc.communicate()
+            proc.wait()
+            if(proc.poll()==0):
+                self.view.set_status("Dlaravel", "console up success" % command)
+                arg = "ps".split()
+                command=["docker-compose","-f","{}/docker-compose.yml".format(dlaravel_basepath)]+arg
+                proc=Popen(command ,bufsize=1, stdout=PIPE,stderr=PIPE, universal_newlines=True);
+                output = proc.communicate()[0]
+                print(output)
+                self.window.run_command("show_panel", {"panel": "console", "toggle": True})
+            else:
+                self.view.set_status("Dlaravel", "Error" % command)
+                print(error)
+                self.window.run_command("show_panel", {"panel": "console", "toggle": True})
+        self.window = self.view.window() 
+        this_thread = Thread(target=run_command)
+        this_thread.start()
 
 class ConsoleDownCommand(sublime_plugin.TextCommand):
-     def run(self, edit):
-         folder = self.view.window().extract_variables()['folder']
-         arg = "down".split()
-         dlaravel_project = re.sub(".*sites/(.+$)", "\\1", folder)
-         dlaravel_basepath = re.sub("(^.*)/sites/(.+$)", "\\1", folder)
-         command=["docker-compose","-f","{}/docker-compose.yml".format(dlaravel_basepath)]+arg
-         proc=Popen(command ,bufsize=1, stdout=PIPE,stderr=PIPE, universal_newlines=True);
-         output, error = proc.communicate()
-         proc.wait()
-         if(proc.poll()==0):
-             self.view.set_status("Dlaravel", "console down Success" % command)
-         else:
-             self.view.set_status("Dlaravel", "Error" % command)
-             print(error)
-             self.view.window().run_command("show_panel", {"panel": "console", "toggle": True})
-
-class ConsolePsCommand(sublime_plugin.TextCommand):
-     def run(self, edit):
-         folder = self.view.window().extract_variables()['folder']
-         arg = "ps".split()
-         dlaravel_project = re.sub(".*sites/(.+$)", "\\1", folder)
-         dlaravel_basepath = re.sub("(^.*)/sites/(.+$)", "\\1", folder)
-         command=["docker-compose","-f","{}/docker-compose.yml".format(dlaravel_basepath)]+arg
-         proc=Popen(command ,bufsize=1, stdout=PIPE,stderr=PIPE, universal_newlines=True);
-         output, error = proc.communicate()
-         proc.wait()
-         if(proc.poll()==0):
-             print(output)
-             self.view.set_status("Dlaravel", "Success" % command)
-             self.view.window().run_command("show_panel", {"panel": "console", "toggle": True})
-         else:
-             self.view.set_status("Dlaravel", "Error" % command)
-             print(error)
-             self.view.window().run_command("show_panel", {"panel": "console", "toggle": True})
+    def run(self, edit):
+        self.window = self.view.window() 
+        def run_command():
+            folder = self.window.extract_variables()['folder']
+            arg = "down".split()
+            dlaravel_project = re.sub(".*sites/(.+$)", "\\1", folder)
+            dlaravel_basepath = re.sub("(^.*)/sites/(.+$)", "\\1", folder)
+            command=["docker-compose","-f","{}/docker-compose.yml".format(dlaravel_basepath)]+arg
+            proc=Popen(command ,bufsize=1, stdout=PIPE,stderr=PIPE, universal_newlines=True);
+            output, error = proc.communicate()
+            proc.wait()
+            if(proc.poll()==0):
+                self.view.set_status("Dlaravel", "console down Success" % command)
+            else:
+                self.view.set_status("Dlaravel", "Error" % command)
+                print(error)
+                self.window.run_command("show_panel", {"panel": "console", "toggle": True})
+        self.window = self.view.window() 
+        this_thread = Thread(target=run_command)
+        this_thread.start()
