@@ -6,12 +6,40 @@ class PhpArtisanCommand(sublime_plugin.TextCommand):
     def run(self, edit, **args):
         self.window = self.view.window()
         self.args = args
-        folder = self.window.extract_variables()['folder']
+        #len(self.window.folders())
+        #=====Check Project Folder===========
+        try:
+            file = self.window.extract_variables()['file']
+            dlaravel_folder = re.sub("^(.+?)(/sites/)(.+?)/(.+?)$", "\\1", file)
+            project_folder = re.sub("^(.+?)(/sites/)(.+?)/(.+?)$", "\\3", file)
+            folder = "{}/sites/{}".format(dlaravel_folder, project_folder)
+        except:
+            folder = self.window.extract_variables()['folder']
+
+
+        
+        dlaravel_folder = re.sub("^(.+?)(/sites/)(.+?)$", "\\1", folder)
+
+        try:
+            dlaravel_release = open("{}/etc/dlaravel-release".format(dlaravel_folder),"r").read()
+            print("Project Folder: {}".format(folder))
+            print(dlaravel_release)
+        except:
+            print("Unable to find D-Laravel folder.")
+            print("You can download it at https://github.com/DevinY/dlaravel.")
+            self.window.run_command("show_panel", {"panel": "console", "toggle": True})
+            self.view.set_status("Dlaravel","Unable to find D-Laravel")
+            return False
+
+        self.view.set_status("Dlaravel", "artisan command will be run in {}".format(folder))
+        project_folder = re.sub("^(.+?)(/sites/)(.+?)$", "\\3", folder)
+        #===============================
+
         def auto_complete_level2(*args):
             if("route:l\t" in list(args) or "route:li\t" in list(args)):
-                self.window.show_input_panel("php artisan","route:list", on_done, None, None)
+                self.window.show_input_panel("{} php artisan".format(project_folder),"route:list", on_done, None, None)
             if("migrate:refresh\t" in list(args)):
-                self.window.show_input_panel("php artisan","migrate:refresh", on_done, None, None)
+                self.window.show_input_panel("{} php artisan".format(project_folder),"migrate:refresh", on_done, None, None)
 
         def auto_complete(*args):
             #print(args)
@@ -49,7 +77,7 @@ class PhpArtisanCommand(sublime_plugin.TextCommand):
             this_thread = Thread(target=run_command, args=command.split())
             this_thread.start()
 
-        self.window.show_input_panel("php artisan","", on_done, auto_complete, None)
+        self.window.show_input_panel("({}) php artisan".format(project_folder),"", on_done, auto_complete, None)
 
 class PhpArtisanMigrateCommand(sublime_plugin.TextCommand):
 
@@ -126,8 +154,34 @@ class ComposerCommand(sublime_plugin.TextCommand):
         #print(self.window)
         self.args = args
         self.window = self.view.window()
-        folder = self.window.extract_variables()['folder']
-        print("folder {}".format(folder))
+
+        #=====Check Project Folder===========
+        try:
+            file = self.window.extract_variables()['file']
+            dlaravel_folder = re.sub("^(.+?)(/sites/)(.+?)/(.+?)$", "\\1", file)
+            project_folder = re.sub("^(.+?)(/sites/)(.+?)/(.+?)$", "\\3", file)
+            folder = "{}/sites/{}".format(dlaravel_folder, project_folder)
+        except:
+            folder = self.window.extract_variables()['folder']
+
+
+        
+        dlaravel_folder = re.sub("^(.+?)(/sites/)(.+?)$", "\\1", folder)
+
+        try:
+            dlaravel_release = open("{}/etc/dlaravel-release".format(dlaravel_folder),"r").read()
+            print("Project Folder: {}".format(folder))
+            print(dlaravel_release)
+        except:
+            print("Unable to find D-Laravel folder.")
+            print("You can download it at https://github.com/DevinY/dlaravel.")
+            self.window.run_command("show_panel", {"panel": "console", "toggle": True})
+            self.view.set_status("Dlaravel","Unable to find D-Laravel")
+            return False
+
+        self.view.set_status("Dlaravel", "artisan command will be run in {}".format(folder))
+        project_folder = re.sub("^(.+?)(/sites/)(.+?)$", "\\3", folder)
+        #===============================
 
         def run_command(*args):
             dlaravel_project = re.sub(".*sites/(.+$)", "\\1", folder)
@@ -159,7 +213,7 @@ class ComposerCommand(sublime_plugin.TextCommand):
             this_thread.start()
 
         #self.view.window().run_command("hide_panel", {"panel": "console"})
-        self.window.show_input_panel("composer", "", on_done, None, None)
+        self.window.show_input_panel("({}) composer".format(project_folder), "", on_done, None, None)
 
 class ConsoleUpCommand(sublime_plugin.TextCommand):
 
