@@ -107,6 +107,35 @@ class PhpArtisanMigrateCommand(sublime_plugin.TextCommand):
         this_thread = Thread(target=run_command, args=args.split())
         this_thread.start()
 
+class ConsolePsCommand(sublime_plugin.TextCommand):
+    def run(self, edit):
+        self.window = self.view.window() 
+        def run_command():
+            folder = self.window.extract_variables()['folder']
+            arg = "ps".split()
+            dlaravel_project = re.sub(".*sites/(.+$)", "\\1", folder)
+            dlaravel_basepath = re.sub("(^.*)/sites/(.+$)", "\\1", folder)
+            command=["docker-compose","--no-ansi","-f","{}/docker-compose.yml".format(dlaravel_basepath)]+arg
+            proc=Popen(command ,bufsize=1, stdout=PIPE,stderr=PIPE, universal_newlines=True);
+            output, error = proc.communicate()
+            proc.wait()
+            print(error)
+            if(proc.poll()==0):
+                self.view.set_status("Dlaravel", "console down Success" % command)
+                arg = "ps".split()
+                command=["docker-compose","-f","{}/docker-compose.yml".format(dlaravel_basepath)]+arg
+                proc=Popen(command ,bufsize=1, stdout=PIPE,stderr=PIPE, universal_newlines=True);
+                output = proc.communicate()[0]
+                print(output)
+                self.window.run_command("show_panel", {"panel": "console", "toggle": True})
+            else:
+                self.view.set_status("Dlaravel", "Error" % command)
+                print(error)
+                self.window.run_command("show_panel", {"panel": "console", "toggle": True})
+        self.window = self.view.window() 
+        this_thread = Thread(target=run_command)
+        this_thread.start()
+
 class DockerComposeCommand(sublime_plugin.TextCommand):
 
     def run(self, edit, **args):
@@ -198,13 +227,14 @@ class ComposerCommand(sublime_plugin.TextCommand):
             proc=Popen(command ,bufsize=0, stdout=PIPE,stderr=PIPE, universal_newlines=True);
             output, error = proc.communicate()
             proc.wait()
+            exit_code=proc.poll()
             self.window.run_command("show_panel", {"panel": "console"})
-            if(proc.poll()==0):
+            if(exit_code==0): 
                 self.view.set_status("Dlaravel","composer {} is done.".format(' '.join(args)))
                 print(output)
                 self.window.run_command("hide_panel", {"panel": "console"})
             else:
-                self.window.set_status("Dlaravel", "Error" % command)
+                self.view.set_status("Dlaravel","Unable to find D-Laravel")
                 print(error)
 
         def on_done( command ):
@@ -214,6 +244,7 @@ class ComposerCommand(sublime_plugin.TextCommand):
 
         #self.view.window().run_command("hide_panel", {"panel": "console"})
         self.window.show_input_panel("({}) composer".format(project_folder), "", on_done, None, None)
+
 
 class ConsoleUpCommand(sublime_plugin.TextCommand):
 

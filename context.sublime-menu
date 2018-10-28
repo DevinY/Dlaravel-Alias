@@ -13,6 +13,10 @@
 	"command": "composer"
 	},
 	{
+	"caption": "console ps",
+	"command": "console_ps"
+	},
+	{
 	"caption": "console down",
 	"command": "console_down"
 	},
